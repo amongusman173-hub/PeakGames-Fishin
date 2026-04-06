@@ -633,6 +633,13 @@ canvas.addEventListener('wheel', e=>{
     admin.scroll = Math.max(0, Math.min(admin._maxScroll||0, admin.scroll + e.deltaY*0.5));
     e.preventDefault(); return;
   }
+  if(state.screen==='bait'){
+    const cols=3,cH=124,gap=10;
+    const totalRows=Math.ceil(BAITS.length/cols);
+    const maxScroll=Math.max(0,totalRows*(cH+gap)-414);
+    state.baitScroll=Math.max(0,Math.min(maxScroll,(state.baitScroll||0)+e.deltaY*0.5));
+    e.preventDefault();
+  }
   if(state.screen==='shop'){
     const maxScroll = Math.max(0, Math.ceil(RODS.length/3)*162 - 310);
     state.shopScroll = Math.max(0, Math.min(maxScroll, state.shopScroll + e.deltaY*0.5));
@@ -2001,17 +2008,29 @@ function drawBait(){
   panel(px,py,pw,ph,'Bait Shop','rgba(26,58,90,0.25)');
   ctx.fillStyle='#ffd54f'; ctx.font='13px sans-serif'; ctx.textAlign='center';
   ctx.fillText('Balance: $'+state.money.toLocaleString(), cx, py+52);
+
   const cols=3,cW=172,cH=124,gap=10;
-  const gx=cx-(cols*cW+(cols-1)*gap)/2,gy=py+66;
+  const gx=cx-(cols*cW+(cols-1)*gap)/2;
+  const gridTop=py+66;
+  const gridH=ph-76;
+  const totalRows=Math.ceil(BAITS.length/cols);
+  const totalH=totalRows*(cH+gap);
+  const maxScroll=Math.max(0,totalH-gridH);
+  if(!state.baitScroll) state.baitScroll=0;
+  state.baitScroll=Math.max(0,Math.min(maxScroll,state.baitScroll));
+
+  // Clip to grid area
+  ctx.save();
+  ctx.beginPath(); ctx.rect(px+2, gridTop, pw-4, gridH); ctx.clip();
+
   BAITS.forEach((bait,i)=>{
     const col=i%cols,row=Math.floor(i/cols);
-    const rx=gx+col*(cW+gap),ry=gy+row*(cH+gap);
+    const rx=gx+col*(cW+gap),ry=gridTop+row*(cH+gap)-state.baitScroll;
     const count=state.baitCount[bait.id]||0,active=state.bait===bait.id;
     ctx.fillStyle=active?'rgba(100,200,100,0.1)':'rgba(255,255,255,0.03)';
     ctx.beginPath(); ctx.roundRect(rx,ry,cW,cH,10); ctx.fill();
     ctx.strokeStyle=active?'#4caf50':'rgba(255,255,255,0.07)'; ctx.lineWidth=active?2:1;
     ctx.beginPath(); ctx.roundRect(rx,ry,cW,cH,10); ctx.stroke();
-    // Bait icon — colored circle
     ctx.fillStyle=bait.color+'88';
     ctx.beginPath(); ctx.arc(rx+cW/2,ry+28,16,0,Math.PI*2); ctx.fill();
     ctx.fillStyle=bait.color;
@@ -2033,6 +2052,19 @@ function drawBait(){
     ctx.fillStyle=count>0?(active?'#4caf50':'#aaa'):'#333'; ctx.font='bold 10px sans-serif'; ctx.textAlign='center';
     ctx.fillText(active?'Active':'Equip', rx+cW/2+2+hw/2, ry+cH-15);
   });
+
+  ctx.restore();
+
+  // Scroll indicator
+  if(maxScroll>0){
+    const trackH=gridH-8, trackX=px+pw-10, trackY=gridTop+4;
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.roundRect(trackX,trackY,4,trackH,2); ctx.fill();
+    const thumbH=Math.max(24,(gridH/totalH)*trackH);
+    const thumbY=trackY+(state.baitScroll/maxScroll)*(trackH-thumbH);
+    ctx.fillStyle='rgba(255,255,255,0.25)';
+    ctx.beginPath(); ctx.roundRect(trackX,thumbY,4,thumbH,2); ctx.fill();
+  }
 }
 
 // ─── SKILLS ──────────────────────────────────────────────────────────────────
@@ -2384,7 +2416,7 @@ function onCanvasDown(e){
     const gx=cx-(cols*cW+(cols-1)*gap)/2,gy=ppy+66;
     BAITS.forEach((bait,i)=>{
       const col=i%cols,row=Math.floor(i/cols);
-      const rx=gx+col*(cW+gap),ry=gy+row*(cH+gap);
+      const rx=gx+col*(cW+gap),ry=gy+row*(cH+gap)-(state.baitScroll||0);
       const hw=(cW-20)/2;
       if(mx>=rx+8&&mx<=rx+8+hw&&my>=ry+cH-30&&my<=ry+cH-8){
         if(state.money>=bait.cost){state.money-=bait.cost;state.baitCount[bait.id]=(state.baitCount[bait.id]||0)+5;notify('Bought 5x '+bait.name,'uncommon');playSound('buy',0.5);}
