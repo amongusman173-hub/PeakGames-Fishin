@@ -288,11 +288,17 @@ function rodZoneBonus(rod) { return (rod.zoneBonus||0) + ((rod.stability||1)-1)*
 function rodFallSpeed(rod) { return Math.max(0.15, 0.65 - (rod.stability||1)*0.05); }
 
 const BAITS = [
-  {id:'worm',     name:'Worm',        cost:5,   desc:'Basic bait',          luckBonus:0.05, speedBonus:0,    color:'#c87040'},
-  {id:'shrimp',   name:'Shrimp',      cost:15,  desc:'+speed to catch',     luckBonus:0,    speedBonus:0.15, color:'#e87060'},
-  {id:'glowworm', name:'Glow Worm',   cost:30,  desc:'+luck for rare fish', luckBonus:0.12, speedBonus:0,    color:'#60e870'},
-  {id:'deepbait', name:'Deep Bait',   cost:80,  desc:'+speed & +luck',      luckBonus:0.08, speedBonus:0.10, color:'#6060e8'},
-  {id:'goldbait', name:'Golden Lure', cost:200, desc:'Big luck boost',      luckBonus:0.25, speedBonus:0,    color:'#e8c030'},
+  {id:'worm',      name:'Worm',          cost:5,   desc:'Basic bait',             luckBonus:0.05, speedBonus:0,    color:'#c87040'},
+  {id:'shrimp',    name:'Shrimp',        cost:15,  desc:'+speed to catch',        luckBonus:0,    speedBonus:0.15, color:'#e87060'},
+  {id:'glowworm',  name:'Glow Worm',     cost:30,  desc:'+luck for rare fish',    luckBonus:0.12, speedBonus:0,    color:'#60e870'},
+  {id:'deepbait',  name:'Deep Bait',     cost:80,  desc:'+speed & +luck',         luckBonus:0.08, speedBonus:0.10, color:'#6060e8'},
+  {id:'goldbait',  name:'Golden Lure',   cost:200, desc:'Big luck boost',         luckBonus:0.25, speedBonus:0,    color:'#e8c030'},
+  {id:'cricket',   name:'Cricket',       cost:10,  desc:'+speed, cheap',          luckBonus:0.02, speedBonus:0.10, color:'#a0a020'},
+  {id:'leech',     name:'Leech',         cost:25,  desc:'+luck in swamp/river',   luckBonus:0.10, speedBonus:0.05, color:'#6a1a6a'},
+  {id:'squidbait', name:'Squid Chunk',   cost:60,  desc:'+luck in ocean',         luckBonus:0.15, speedBonus:0.05, color:'#4040c0'},
+  {id:'icebait',   name:'Ice Grub',      cost:120, desc:'+luck in frozen areas',  luckBonus:0.18, speedBonus:0,    color:'#80d8ff'},
+  {id:'magmabait', name:'Magma Worm',    cost:300, desc:'+speed & big luck',      luckBonus:0.20, speedBonus:0.20, color:'#ff4400'},
+  {id:'voidbait',  name:'Void Lure',     cost:500, desc:'Max luck & speed boost', luckBonus:0.35, speedBonus:0.25, color:'#9900ff'},
 ];
 
 const SKILL_TREE = [

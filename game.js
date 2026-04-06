@@ -193,6 +193,7 @@ const state = {
   skillInfo: null,
   mainMenu: true,
   wipeConfirm: false, // two-step wipe confirmation
+  minimapOpen: false,
 };
 
 // ─── TUTORIAL ────────────────────────────────────────────────────────────────
@@ -328,6 +329,98 @@ function clearKeys(){
   player.sprinting=false;
   ctrlHeld=false;
 }
+
+// ─── MINIMAP ─────────────────────────────────────────────────────────────────
+function drawMinimap(){
+  if(!state.minimapOpen) return;
+  const cx=canvas.width/2, cy=canvas.height/2;
+  const mw=Math.min(700,canvas.width-40), mh=Math.min(520,canvas.height-40);
+  const mx=cx-mw/2, my=cy-mh/2;
+  const scaleX=mw/WORLD_W, scaleY=mh/WORLD_H;
+
+  // Background
+  ctx.fillStyle='rgba(6,10,6,0.97)';
+  ctx.beginPath(); ctx.roundRect(mx,my,mw,mh,14); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(mx,my,mw,mh,14); ctx.stroke();
+
+  // Title
+  ctx.fillStyle='#e0e0e0'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('World Map', cx, my+24);
+  ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.font='10px sans-serif';
+  ctx.fillText('[M] close', cx, my+38);
+
+  // Close X
+  ctx.fillStyle='rgba(255,255,255,0.08)';
+  ctx.beginPath(); ctx.arc(mx+mw-18,my+18,12,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(mx+mw-24,my+12); ctx.lineTo(mx+mw-12,my+24); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx+mw-12,my+12); ctx.lineTo(mx+mw-24,my+24); ctx.stroke();
+
+  // Clip to map area
+  ctx.save();
+  ctx.beginPath(); ctx.roundRect(mx+2,my+44,mw-4,mh-48,10); ctx.clip();
+
+  const ox=mx, oy=my+44;
+
+  // Draw zones
+  for(const id of ZONE_ORDER){
+    const z=ZONES.find(z=>z.id===id); if(!z) continue;
+    const zx=ox+z.x*scaleX, zy=oy+z.y*scaleY;
+    const zw=z.w*scaleX, zh=z.h*scaleY;
+    ctx.fillStyle=z.color;
+    ctx.globalAlpha=0.85;
+    ctx.fillRect(zx,zy,zw,zh);
+  }
+  ctx.globalAlpha=1;
+
+  // Draw locked area overlays
+  for(const b of BARRIER_ZONES){
+    if(AREA_LOCKS[b.lockKey]?.unlocked) continue;
+    const bx=ox+b.x*scaleX, by=oy+b.y*scaleY;
+    const bw=b.w*scaleX, bh=b.h*scaleY;
+    ctx.fillStyle='rgba(0,0,0,0.55)';
+    ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle='rgba(255,80,80,0.4)'; ctx.lineWidth=1;
+    ctx.strokeRect(bx,by,bw,bh);
+    // Lock icon
+    const lcx=bx+bw/2, lcy=by+bh/2;
+    if(bw>20&&bh>14){
+      ctx.fillStyle='rgba(255,80,80,0.7)'; ctx.font='bold '+Math.max(8,Math.min(14,bh*0.4))+'px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('🔒', lcx, lcy+4);
+    }
+  }
+
+  // Draw buildings as small dots
+  for(const b of BUILDINGS){
+    const bx=ox+b.x*scaleX, by=oy+b.y*scaleY;
+    ctx.fillStyle=b.roofColor||'#888';
+    ctx.beginPath(); ctx.arc(bx+b.w*scaleX/2, by+b.h*scaleY/2, 3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Player dot
+  const px2=ox+player.x*scaleX, py2=oy+player.y*scaleY;
+  // Pulse ring
+  const pulse=(Math.sin(Date.now()/300)+1)/2;
+  ctx.strokeStyle='rgba(255,80,80,'+(0.3+pulse*0.4)+')';
+  ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(px2,py2,5+pulse*3,0,Math.PI*2); ctx.stroke();
+  // Dot
+  ctx.fillStyle='#ff3333';
+  ctx.beginPath(); ctx.arc(px2,py2,4,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(px2,py2,2,0,Math.PI*2); ctx.fill();
+
+  ctx.restore();
+
+  // Legend
+  ctx.fillStyle='rgba(255,255,255,0.2)'; ctx.font='9px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('🔴 You   🔒 Locked area', mx+10, my+mh-8);
+}
+
+// store close btn for click
+drawMinimap._cx = 0; drawMinimap._cy = 0;
 
 // ─── ADMIN PANEL (Konami: ↑↓↑↓←→←→BA Enter) ─────────────────────────────────
 const KONAMI = ['ArrowUp','ArrowDown','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a','Enter'];
@@ -493,6 +586,7 @@ window.addEventListener('keydown', e=>{
   if(e.key==='i'||e.key==='I') state.screen=state.screen==='log'?'world':'log';
   if(e.key==='c'||e.key==='C') state.screen=state.screen==='collection'?'world':'collection';
   if(e.key==='p'||e.key==='P') state.screen=state.screen==='settings'?'world':'settings';
+  if(e.key==='m'||e.key==='M') state.minimapOpen=!state.minimapOpen;
   if(e.key==='Tab'){ state.paused=!state.paused; e.preventDefault(); return; }
   if(!state.musicStarted){ state.musicStarted=true; setBGMusic('music',0.2); }
   // Main menu dismiss on any key
@@ -2137,6 +2231,12 @@ function onCanvasDown(e){
   const cx=canvas.width/2, cy=canvas.height/2;
 
   if(admin.open){ adminClick(mx,my); return; }
+  if(state.minimapOpen){
+    const mw=Math.min(700,canvas.width-40), mh=Math.min(520,canvas.height-40);
+    const mpx=cx-mw/2, mpy=cy-mh/2;
+    if(Math.hypot(mx-(mpx+mw-18),my-(mpy+18))<14){ state.minimapOpen=false; return; }
+    return;
+  }
 
   if(state.mainMenu){
     for(const btn of mainMenuBtns){
@@ -2467,6 +2567,7 @@ function loop(ts){
 
   if(state.paused) drawPause();
   if(admin.open) drawAdmin();
+  if(state.minimapOpen) drawMinimap();
 
   // FPS overlay
   if(settings.showFps){
@@ -2800,14 +2901,14 @@ function drawPause(){
 function drawSkillInfo(){
   const skill=state.skillInfo; if(!skill) return;
   const cx=canvas.width/2, cy=canvas.height/2;
-  const pw=300, ph=220, px=cx-pw/2, py=cy-ph/2;
+  const pw=340, ph=280, px=cx-pw/2, py=cy-ph/2;
   const catColors={luck:'#ffd54f',skill:'#4fc3f7',extra:'#c080ff'};
   const col=catColors[skill.cat]||'#fff';
 
   ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.fillStyle='rgba(6,10,6,0.98)';
   ctx.beginPath(); ctx.roundRect(px,py,pw,ph,14); ctx.fill();
-  ctx.strokeStyle=col+'66'; ctx.lineWidth=2;
+  ctx.strokeStyle=col+'88'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.roundRect(px,py,pw,ph,14); ctx.stroke();
 
   // X close
@@ -2817,47 +2918,83 @@ function drawSkillInfo(){
   ctx.beginPath(); ctx.moveTo(px+pw-24,py+12); ctx.lineTo(px+pw-12,py+24); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(px+pw-12,py+12); ctx.lineTo(px+pw-24,py+24); ctx.stroke();
 
-  ctx.fillStyle=col; ctx.font='bold 16px sans-serif'; ctx.textAlign='center';
+  // Name + category
+  ctx.fillStyle=col; ctx.font='bold 18px sans-serif'; ctx.textAlign='center';
   ctx.fillText(skill.name, cx, py+36);
-  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='10px sans-serif';
-  ctx.fillText(skill.cat.toUpperCase()+' SKILL  •  '+skill.cost+' pts', cx, py+52);
-  ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(px+20,py+60); ctx.lineTo(px+pw-20,py+60); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='11px sans-serif';
+  ctx.fillText(skill.cat.toUpperCase()+' SKILL  •  Cost: '+skill.cost+' skill point'+(skill.cost>1?'s':''), cx, py+54);
 
-  ctx.fillStyle='#ccc'; ctx.font='12px sans-serif'; ctx.textAlign='center';
-  ctx.fillText(skill.desc, cx, py+80);
+  ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(px+20,py+62); ctx.lineTo(px+pw-20,py+62); ctx.stroke();
 
-  // Effect details
-  const effs=Object.entries(skill.effect);
-  effs.forEach(([k,v],i)=>{
-    ctx.fillStyle='#888'; ctx.font='10px sans-serif';
-    ctx.fillText(k+': '+v, cx, py+100+i*16);
-  });
+  // Human-readable effect lines
+  const EFFECT_LABELS = {
+    rarityBonus:   v=>'+'+(v*100).toFixed(0)+'% chance of rare fish',
+    sellBonus:     v=>'+'+(v*100).toFixed(0)+'% sell value on all fish',
+    zoneBonus:     v=>'+'+(v*100).toFixed(0)+'% bigger catch zone',
+    speedBonus:    v=>'Cast speed +'+(v*100).toFixed(0)+'% faster',
+    doubleChance:  v=>+(v*100).toFixed(0)+'% chance to catch 2 fish',
+    escapeSlow:    v=>'Escape bar fills '+(v*100).toFixed(0)+'% slower',
+    expBonus:      v=>'+'+(v*100).toFixed(0)+'% EXP from all catches',
+    nightBonus:    v=>'+'+(v*100).toFixed(0)+'% luck during night',
+    stormBonus:    v=>'+'+(v*100).toFixed(0)+'% luck during rain',
+    auroraBonus:   v=>'+'+(v*100).toFixed(0)+'% luck during aurora',
+    mutationBonus: v=>'+'+(v*100).toFixed(0)+'% mutation chance',
+    mythicUnlock:  ()=>'Unlocks mythic fish to appear',
+    allDouble:     ()=>'Doubles all active skill bonuses',
+    keenEye:       ()=>'Shows rarity hint before catching',
+    weatherSense:  ()=>'Reveals upcoming weather event',
+  };
+
+  const lines=[];
+  for(const [k,v] of Object.entries(skill.effect)){
+    const fn=EFFECT_LABELS[k];
+    lines.push(fn?fn(v):k+': '+v);
+  }
+
+  let ly=py+82;
+  for(const line of lines){
+    ctx.fillStyle='#ddd'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(line, cx, ly); ly+=22;
+  }
+
+  // Requires
+  if(skill.requires){
+    const par=SKILL_TREE.find(s=>s.id===skill.requires);
+    ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Requires: '+(par?par.name:skill.requires), cx, py+ph-90);
+  }
 
   const unlocked=state.skills.has(skill.id);
   const parOk=!skill.requires||state.skills.has(skill.requires);
 
-  // Unlock button
+  // Unlock / refund button
+  const btnY=py+ph-68;
   if(!unlocked&&parOk){
     const can=state.skillPoints>=skill.cost;
     ctx.fillStyle=can?'rgba(79,195,247,0.2)':'rgba(255,255,255,0.04)';
-    ctx.beginPath(); ctx.roundRect(px+20,py+ph-80,pw-40,28,7); ctx.fill();
-    ctx.fillStyle=can?'#4fc3f7':'#444'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(can?'Unlock ('+skill.cost+' pts)':'Need '+skill.cost+' pts', cx, py+ph-61);
+    ctx.beginPath(); ctx.roundRect(px+20,btnY,pw-40,32,8); ctx.fill();
+    ctx.strokeStyle=can?'#4fc3f7':'rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(px+20,btnY,pw-40,32,8); ctx.stroke();
+    ctx.fillStyle=can?'#4fc3f7':'#555'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(can?'Unlock  ('+skill.cost+' pts)':'Need '+skill.cost+' skill points', cx, btnY+21);
+  } else if(!unlocked&&!parOk){
+    ctx.fillStyle='rgba(255,255,255,0.04)';
+    ctx.beginPath(); ctx.roundRect(px+20,btnY,pw-40,32,8); ctx.fill();
+    ctx.fillStyle='#555'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Unlock parent skill first', cx, btnY+21);
   }
-
-  // Refund button (only if unlocked)
   if(unlocked){
-    ctx.fillStyle='rgba(244,67,54,0.15)';
-    ctx.beginPath(); ctx.roundRect(px+20,py+ph-80,pw-40,28,7); ctx.fill();
-    ctx.strokeStyle='rgba(244,67,54,0.4)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(px+20,py+ph-80,pw-40,28,7); ctx.stroke();
-    ctx.fillStyle='#f44336'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('Refund (+'+skill.cost+' pts)', cx, py+ph-61);
+    ctx.fillStyle='rgba(76,175,80,0.15)';
+    ctx.beginPath(); ctx.roundRect(px+20,btnY,pw-40,32,8); ctx.fill();
+    ctx.strokeStyle='rgba(76,175,80,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(px+20,btnY,pw-40,32,8); ctx.stroke();
+    ctx.fillStyle='#4caf50'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('✓ Unlocked  —  Refund (+'+skill.cost+' pts)', cx, btnY+21);
   }
 
   ctx.fillStyle='#333'; ctx.font='10px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('[Esc] Back', cx, py+ph-14);
+  ctx.fillText('[Esc] close', cx, py+ph-10);
   drawSkillInfo._px=px; drawSkillInfo._py=py; drawSkillInfo._pw=pw; drawSkillInfo._ph=ph;
 }
 
