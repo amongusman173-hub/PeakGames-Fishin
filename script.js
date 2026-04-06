@@ -12,40 +12,39 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Preview toggle functionality
-function togglePreview(gameId) {
+// Load all iframes immediately as silent thumbnails
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.game-preview iframe[data-src]').forEach(iframe => {
+        iframe.src = iframe.dataset.src;
+    });
+});
+
+// Preview toggle - expands to full interactive, collapses back to thumbnail (reloads to kill audio)
+function togglePreview(event) {
     const gameCard = event.target.closest('.game-card');
     const preview = gameCard.querySelector('.game-preview');
     const iframe = preview.querySelector('iframe');
     const button = event.target;
-    
+
     if (preview.classList.contains('expanded')) {
         preview.classList.remove('expanded');
         button.textContent = 'Preview';
-        // Reset iframe
-        iframe.style.width = '125%';
-        iframe.style.height = '125%';
-        iframe.style.transform = 'scale(0.8)';
         iframe.style.pointerEvents = 'none';
+        // Reload to reset audio
+        iframe.src = iframe.dataset.src;
     } else {
-        // Close other expanded previews
+        // Collapse any other open previews first
         document.querySelectorAll('.game-preview.expanded').forEach(p => {
             p.classList.remove('expanded');
-            const otherButton = p.parentElement.querySelector('.btn-preview');
             const otherIframe = p.querySelector('iframe');
-            otherButton.textContent = 'Preview';
-            otherIframe.style.width = '125%';
-            otherIframe.style.height = '125%';
-            otherIframe.style.transform = 'scale(0.8)';
+            const otherButton = p.parentElement.querySelector('.btn-preview');
             otherIframe.style.pointerEvents = 'none';
+            otherIframe.src = otherIframe.dataset.src;
+            otherButton.textContent = 'Preview';
         });
-        
+
         preview.classList.add('expanded');
         button.textContent = 'Close Preview';
-        // Expand iframe
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.transform = 'scale(1)';
         iframe.style.pointerEvents = 'auto';
     }
 }
@@ -190,33 +189,16 @@ document.addEventListener('DOMContentLoaded', () => {
 // Observe game cards for animation - removed to fix visibility issues
 // Games are now immediately visible on page load
 
-// Add loading states for iframes
+// Add loading states for iframes - only triggers when src is set via preview
 document.querySelectorAll('iframe').forEach(iframe => {
     const container = iframe.parentElement;
-    const loader = document.createElement('div');
-    loader.className = 'iframe-loader';
-    loader.innerHTML = '<div class="spinner"></div><p>Loading game preview...</p>';
-    container.appendChild(loader);
-    
-    // Set a timeout for loading
-    const loadTimeout = setTimeout(() => {
-        if (loader.parentElement) {
-            loader.innerHTML = '<div class="load-error">Preview unavailable<br><small>Click "Play Now" to access the game</small></div>';
-        }
-    }, 10000);
-    
+
     iframe.addEventListener('load', () => {
-        clearTimeout(loadTimeout);
-        setTimeout(() => {
-            if (loader.parentElement) {
-                loader.remove();
-            }
-        }, 500);
-    });
-    
-    iframe.addEventListener('error', () => {
-        clearTimeout(loadTimeout);
-        loader.innerHTML = '<div class="load-error">Preview unavailable<br><small>Click "Play Now" to access the game</small></div>';
+        // Only show loader if actually loading a game
+        if (!iframe.src || iframe.src === window.location.href) return;
+
+        const existing = container.querySelector('.iframe-loader');
+        if (existing) existing.remove();
     });
 });
 
