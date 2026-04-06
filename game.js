@@ -1670,6 +1670,7 @@ function drawHUD(){
     {label:'Log [I]',   x:p+82,  col:'#80ff80',bg:'rgba(20,40,20,0.9)', border:'rgba(60,160,60,0.35)'},
     {label:'Dex [C]',   x:p+154, col:'#ffd54f',bg:'rgba(60,50,10,0.9)', border:'rgba(200,180,40,0.35)'},
     {label:'\u2699 [P]',x:p+226, col:'#aaa',   bg:'rgba(30,30,40,0.9)', border:'rgba(100,100,120,0.35)'},
+    {label:'Map [M]',   x:p+298, col:'#4fc3f7',bg:'rgba(10,30,50,0.9)', border:'rgba(40,120,180,0.35)'},
   ];
   for(const btn of btns){
     const bw=68;
