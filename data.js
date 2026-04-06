@@ -46,6 +46,8 @@ const ZONES = [
   {id:'dock_edge',     x:1600, y:3080, w:1800, h:40,   color:'#7a5a14', fishable:false},
   // Big ocean directly south of dock — always fishable
   {id:'dock_ocean',    x:1600, y:3100, w:1800, h:1100, color:'#1a5a8a', name:'Ocean',     fishable:true, biome:'ocean'},
+  // Boat ocean — only reachable by boat, extends further south with deep ocean fish
+  {id:'boat_ocean',    x:1600, y:4200, w:1800, h:2600, color:'#0d3d6a', name:'Deep Ocean', fishable:true, biome:'ocean_deep'},
   {id:'town_sq',       x:1700, y:1500, w:700,  h:600,  color:'#8a7a6a', name:'Town Square', fishable:false},
   {id:'path_n',        x:1980, y:700,  w:140,  h:800,  color:'#9a8a78', fishable:false},
   {id:'path_s',        x:1980, y:2100, w:140,  h:500,  color:'#9a8a78', fishable:false},
@@ -73,7 +75,7 @@ const ZONE_ORDER = [
   'pond_shore','pond',
   'ocean_shore','ocean','deep_ocean','coral_reef',
   'cave_ground','cave_water1','cave_water2','cave_water3',
-  'dock_ocean','dock_edge','dock_platform',
+  'boat_ocean','dock_ocean','dock_edge','dock_platform',
   'town_sq','path_n','path_s','path_e','path_w','path_cave','path_snow',
   'bridge_main','bridge_east','bridge_west',
   'ice_lake','arctic_water',

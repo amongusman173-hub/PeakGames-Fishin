@@ -692,6 +692,8 @@ function isWalkable(wx,wy){
   if(isBarriered(wx,wy)) return false;
   const z=getTopZone(wx,wy);
   if(!z) return false;
+  // Boat ocean — only walkable with a boat
+  if(z.id==='boat_ocean') return state.hasBoat;
   if(!WALKABLE_IDS.has(z.id)) return false;
   // Dock requires docks_key
   if((z.id==='dock_platform'||z.id==='dock_edge') && !AREA_LOCKS.docks_key?.unlocked) return false;
@@ -1418,6 +1420,15 @@ function drawWorld(){
     ctx.fillText(label,px,py-39);
   }
 
+  // Boat zone indicator
+  const onBoatZone = getTopZone(player.x,player.y)?.id==='boat_ocean';
+  if(onBoatZone && state.hasBoat){
+    ctx.fillStyle='rgba(0,0,0,0.75)';
+    ctx.beginPath(); ctx.roundRect(canvas.width/2-90, canvas.height-56, 180, 28, 7); ctx.fill();
+    ctx.fillStyle='#c8a020'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('⛵ Deep Ocean — [E] to fish', canvas.width/2, canvas.height-37);
+  }
+
   // Dock locked warning — show when player walks near dock area
   if(!AREA_LOCKS.docks_key?.unlocked){
     const dockX=1600+900, dockY=2600+250; // center of dock
@@ -1587,6 +1598,29 @@ function drawPlayer(){
     ctx.globalAlpha=1;
   }
   // Body — plain solid circle with subtle highlight, NO eyes
+  // Boat hull when on boat ocean
+  const onBoatWater = getTopZone(player.x,player.y)?.id==='boat_ocean';
+  if(onBoatWater && state.hasBoat){
+    ctx.fillStyle='#8b5e1a';
+    ctx.beginPath();
+    ctx.ellipse(px, py+6, player.r*1.8, player.r*0.9, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#c8a020';
+    ctx.beginPath();
+    ctx.ellipse(px, py+4, player.r*1.6, player.r*0.65, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.ellipse(px, py+4, player.r*1.6, player.r*0.65, 0, 0, Math.PI*2);
+    ctx.stroke();
+    // Wake ripples
+    ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1;
+    for(let i=1;i<=2;i++){
+      ctx.beginPath();
+      ctx.ellipse(px-Math.cos(player.angle)*player.r*i*1.5, py-Math.sin(player.angle)*player.r*i*1.5, player.r*i*0.8, player.r*i*0.3, player.angle, 0, Math.PI*2);
+      ctx.stroke();
+    }
+  }
   ctx.fillStyle=sprinting?'#80d8ff':'#4fc3f7';
   ctx.beginPath(); ctx.arc(px,py,player.r,0,Math.PI*2); ctx.fill();
   // Subtle highlight
@@ -2241,19 +2275,21 @@ function drawBoatShop(){
   ctx.fillStyle='#e0e0e0'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center';
   ctx.fillText(state.hasBoat ? 'You own a boat!' : 'Fishing Boat', cx, cy+46);
   ctx.fillStyle='#888'; ctx.font='11px sans-serif';
-  ctx.fillText(state.hasBoat ? 'Fish in the deep ocean from the dock' : 'Sail out to fish in the deep ocean', cx, cy+62);
+  ctx.fillText(state.hasBoat ? 'Sail south past the docks into deep ocean' : 'Sail south past the docks into deep ocean', cx, cy+62);
+  ctx.fillStyle='#666'; ctx.font='10px sans-serif';
+  ctx.fillText(state.hasBoat ? 'Walk south from the dock edge to board' : 'Unlocks deep ocean south of the docks', cx, cy+76);
 
   if(!state.hasBoat){
     const can=state.money>=2000;
     ctx.fillStyle=can?'rgba(79,195,247,0.2)':'rgba(255,255,255,0.04)';
-    ctx.beginPath(); ctx.roundRect(cx-70,cy+74,140,28,7); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx-70,cy+90,140,28,7); ctx.fill();
     ctx.fillStyle=can?'#4fc3f7':'#444'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('Buy Boat  $2,000', cx, cy+93);
+    ctx.fillText('Buy Boat  $2,000', cx, cy+109);
   } else {
     ctx.fillStyle='rgba(76,175,80,0.15)';
-    ctx.beginPath(); ctx.roundRect(cx-70,cy+74,140,28,7); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(cx-70,cy+90,140,28,7); ctx.fill();
     ctx.fillStyle='#4caf50'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('\u2713 Boat Owned', cx, cy+93);
+    ctx.fillText('\u2713 Boat Owned', cx, cy+109);
   }
 }
 
@@ -2432,7 +2468,7 @@ function onCanvasDown(e){
 
   if(state.screen==='boat'){
     const pw=480,ph=320,ppx=cx-pw/2,ppy=cy-ph/2;
-    const bx=cx-70, by=ppy+ph/2+74, bw=140, bh=28;
+    const bx=cx-70, by=ppy+ph/2+90, bw=140, bh=28;
     if(!state.hasBoat&&mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){
       if(state.money>=2000){
         state.money-=2000; state.hasBoat=true;
