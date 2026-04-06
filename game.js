@@ -100,7 +100,7 @@ function updateWeather(dt) {
       weather.alpha=0;
       weather.phase='in';
       weather.raindrops=[];
-      if(weather.current==='rain') rainAmbienceNode=playSound('rain',0.8,true);
+      if(weather.current==='rain') rainAmbienceNode=playSound('rain',1.0,true);
       if(weather.current!=='clear') notify('Weather: '+weather.current.charAt(0).toUpperCase()+weather.current.slice(1),'uncommon');
       else notify('Skies clearing...','common');
     }
@@ -2503,7 +2503,7 @@ function onCanvasDown(e){
         if(mx>=tx&&mx<=tx+tw&&my>=ty&&my<=ty+th){
           settings[row.key]=!settings[row.key];
           if(row.key==='rainSounds'&&rainAmbienceNode){
-            rainAmbienceNode.volume=settings.rainSounds?settings.sfxVol*0.5:0;
+            rainAmbienceNode.volume=settings.rainSounds?settings.sfxVol*0.9:0;
           }
         }
       }
@@ -2559,7 +2559,7 @@ function applySliderDrag(mx) {
   settings[sliderDrag.key] = val;
   if (sliderDrag.key === 'musicVol' && bgMusic) bgMusic.volume = val;
   if (sliderDrag.key === 'sfxVol' && rainAmbienceNode) {
-    rainAmbienceNode.volume = settings.rainSounds ? val * 0.5 : 0;
+    rainAmbienceNode.volume = settings.rainSounds ? val * 0.9 : 0;
   }
 }
 let last=0, fps=0, fpsTimer=0, fpsCount=0;

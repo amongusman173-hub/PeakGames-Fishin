@@ -298,7 +298,7 @@ const BAITS = [
   {id:'squidbait', name:'Squid Chunk',   cost:60,  desc:'+luck in ocean',         luckBonus:0.15, speedBonus:0.05, color:'#4040c0'},
   {id:'icebait',   name:'Ice Grub',      cost:120, desc:'+luck in frozen areas',  luckBonus:0.18, speedBonus:0,    color:'#80d8ff'},
   {id:'magmabait', name:'Magma Worm',    cost:300, desc:'+speed & big luck',      luckBonus:0.20, speedBonus:0.20, color:'#ff4400'},
-  {id:'voidbait',  name:'Void Lure',     cost:500, desc:'Max luck & speed boost', luckBonus:0.35, speedBonus:0.25, color:'#9900ff'},
+  {id:'voidbait',  name:'Void Lure',     cost:2000, desc:'Max luck & speed boost', luckBonus:0.35, speedBonus:0.25, color:'#9900ff'},
 ];
 
 const SKILL_TREE = [
