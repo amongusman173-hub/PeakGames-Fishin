@@ -1010,7 +1010,7 @@ function updateMinigame(dt){
     const d=RARITY_DIFF[mg.fish.rarity];
     mg.erraticTimer=0.2+Math.random()*0.6/(d.erratic+0.1);
     if(Math.random()<0.35+d.erratic*0.08) mg.fishDir*=-1;
-    mg.fishVel=d.speed*0.003*(0.6+Math.random()*0.8);
+    mg.fishVel=d.speed*0.004*(0.7+Math.random()*0.9);
   }
   mg.fishPos+=mg.fishVel*mg.fishDir;
   if(mg.fishPos<=0){mg.fishPos=0;mg.fishDir=1;}
@@ -1809,7 +1809,7 @@ function drawFishing(){
   }
 
   // Reeling phase
-  const bH=340,bW=42,bX=cx-bW/2,bY=cy-bH/2;
+  const bH=460,bW=42,bX=cx-bW/2,bY=cy-bH/2;
   const panW=310,panH=430;
   ctx.fillStyle='rgba(6,10,6,0.97)';
   ctx.beginPath(); ctx.roundRect(cx-panW/2,cy-panH/2,panW,panH,16); ctx.fill();
