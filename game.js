@@ -605,7 +605,24 @@ window.addEventListener('keydown', e=>{
 });
 window.addEventListener('keyup', e=>{ keys[e.key]=false; if(e.key===' ') keys[' ']=false; if(e.key==='Control') ctrlHeld=false; });
 window.addEventListener('blur', clearKeys);
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) clearKeys(); });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    clearKeys();
+    // Pause all audio when tab/iframe is hidden
+    if(bgMusic) bgMusic.pause();
+    if(rainAmbienceNode) rainAmbienceNode.pause();
+    if(ambienceNode) ambienceNode.pause();
+    if(woodSoundNode) woodSoundNode.pause();
+    if(grassSoundNode) grassSoundNode.pause();
+    if(sandSoundNode) sandSoundNode.pause();
+    if(concreteSoundNode) concreteSoundNode.pause();
+  } else {
+    // Resume audio when tab/iframe becomes visible again
+    if(state.musicStarted && bgMusic) bgMusic.play().catch(()=>{});
+    if(rainAmbienceNode) rainAmbienceNode.play().catch(()=>{});
+    if(ambienceNode) ambienceNode.play().catch(()=>{});
+  }
+});
 window.addEventListener('contextmenu', e=>{
   clearKeys();
   // Right-click on skill node
@@ -656,7 +673,7 @@ canvas.addEventListener('wheel', e=>{
   }
 },{passive:false});
 canvas.addEventListener('mousedown', e=>{ onCanvasDown(e); if(!state.musicStarted){state.musicStarted=true;setBGMusic('music',0.2);} });
-canvas.addEventListener('touchstart', e=>{e.preventDefault();onCanvasDown(e.touches[0]);},{passive:false});
+canvas.addEventListener('touchstart', e=>{e.preventDefault(); if(!state.musicStarted){state.musicStarted=true;setBGMusic('music',0.2);} onCanvasDown(e.touches[0]);},{passive:false});
 canvas.addEventListener('mouseup',  ()=>{ if(state.screen==='fishing'&&mg.phase==='reeling') mg.holding=false; sliderDrag.active=false; });
 canvas.addEventListener('touchend', ()=>{ if(state.screen==='fishing'&&mg.phase==='reeling') mg.holding=false; sliderDrag.active=false; });
 canvas.addEventListener('mousemove', e=>{
